@@ -1,5 +1,6 @@
 package rsvier.domain;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -11,7 +12,10 @@ public class Account {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	private long id;
+	
+	@Column(unique=true, nullable=false)
 	private String username;
+	
 	private String password;
 	
 	public long getId() {

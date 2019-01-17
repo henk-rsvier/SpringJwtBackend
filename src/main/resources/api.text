@@ -1,8 +1,8 @@
 # registers a new user
 curl -H "Content-Type: application/json" -X POST -d '{
-    "username": "willem",
+    "username": "piet",
     "password": "welkom01"
-}' http://localhost:8080/users/sign-up
+}' http://localhost:8080/account/sign-up
 
 # logs into the application (JWT is generated)
 curl -i -H "Content-Type: application/json" -X POST -d '{

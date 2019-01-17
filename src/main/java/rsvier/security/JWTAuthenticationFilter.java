@@ -22,10 +22,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import rsvier.domain.Account;
 
-import static rsvier.security.SecurityConstants.EXPIRATION_TIME;
-import static rsvier.security.SecurityConstants.HEADER_STRING;
-import static rsvier.security.SecurityConstants.SECRET;
-import static rsvier.security.SecurityConstants.TOKEN_PREFIX;
+import static rsvier.security.SecurityConstants.*;
 
 public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 

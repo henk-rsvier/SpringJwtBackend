@@ -27,14 +27,17 @@ public class AccountController {
 	
 	@GetMapping("/list")
 	public List<Account> getAccountList() {
-		System.out.println("IN GETACCOUNTLIST: " + accountRepository.findAll());
 		return accountRepository.findAll();
 	}
 	
-	// TODO: create self-register functionality
-	@PostMapping("/sign-up") 
-	public void signUp(@RequestBody Account user) {
-		user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
-		accountRepository.save(user);
+	// TODO: implement correct error handling
+	@PostMapping("/register") 
+	public boolean register(@RequestBody Account account) {
+		if (accountRepository.findByUsername(account.getUsername()) == null) {
+			account.setPassword(bCryptPasswordEncoder.encode(account.getPassword()));
+			accountRepository.save(account);
+			return true;
+		}
+		return false;
 	}
 }
