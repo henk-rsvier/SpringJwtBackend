@@ -1,0 +1,11 @@
+# registers a new user
+curl -H "Content-Type: application/json" -X POST -d '{
+    "username": "willem",
+    "password": "welkom01"
+}' http://localhost:8080/users/sign-up
+
+# logs into the application (JWT is generated)
+curl -i -H "Content-Type: application/json" -X POST -d '{
+    "username": "willem",
+    "password": "welkom01"
+}' http://localhost:8080/login
