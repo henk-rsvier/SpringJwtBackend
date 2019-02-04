@@ -1,64 +1,63 @@
 package rsvier.security;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.springframework.security.authentication.AuthenticationManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import rsvier.domain.Account;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.util.StringUtils;
+import org.springframework.web.filter.OncePerRequestFilter;
+import rsvier.service.CustomUserDetailsService;
 
 import static rsvier.security.SecurityConstants.*;
 
-public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
+public class JWTAuthenticationFilter extends OncePerRequestFilter {
+	
+	private static final Logger LOG = LoggerFactory.getLogger(JWTAuthenticationFilter.class);
 
-	private AuthenticationManager authenticationManager;
+	private JWTTokenProvider tokenProvider;
+	private CustomUserDetailsService customUserDetailsService;
 	
-	public JWTAuthenticationFilter(AuthenticationManager authenticationManager) {
-		this.authenticationManager = authenticationManager;
+	public JWTAuthenticationFilter(JWTTokenProvider tokenProvider, CustomUserDetailsService customUserDetailsService) {
+		this.tokenProvider = tokenProvider;
+		this.customUserDetailsService = customUserDetailsService;
 	}
-	
+
 	@Override
-	public Authentication attemptAuthentication(HttpServletRequest req,
-			HttpServletResponse res) throws AuthenticationException {
+	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+			throws ServletException, IOException {
 		try {
-			Account creds = new ObjectMapper()
-					.readValue(req.getInputStream(), Account.class);
-			return authenticationManager.authenticate(
-					new UsernamePasswordAuthenticationToken(creds.getUsername(), creds.getPassword(),
-							new ArrayList<>()));
-					
-		} catch (IOException e) {
-			throw new RuntimeException(e);
+			String jwt = getJwtFromRequest(request);
+			
+			if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
+				String username = tokenProvider.getUsernameFromJWT(jwt);
+				UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
+				UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+						userDetails, null, userDetails.getAuthorities());
+				authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+				SecurityContextHolder.getContext().setAuthentication(authentication);
+			}
+		} catch (Exception ex) {
+			LOG.error("Could not set user authentication in security context", ex);
 		}
+		filterChain.doFilter(request, response);
+		
 	}
 	
-	@Override
-	protected void successfulAuthentication(HttpServletRequest req,
-			HttpServletResponse response,
-			FilterChain chain,
-			Authentication auth) throws IOException, ServletException {
-		String token = Jwts.builder()
-				.setSubject(((User)auth.getPrincipal()).getUsername())
-				.setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-				.signWith(SignatureAlgorithm.HS512, SECRET)
-				.compact();
-		response.setContentType("application/json");
-		response.setCharacterEncoding("UTF-8");
-		response.getWriter().write( "{\"token\": \"" + token + "\"}");
+	private String getJwtFromRequest(HttpServletRequest request) {
+		String bearerToken  = request.getHeader("Authorization");
+		if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(TOKEN_PREFIX)) {
+			return bearerToken.replace(TOKEN_PREFIX, "");
+		}
+		return null;
 	}
+
 }

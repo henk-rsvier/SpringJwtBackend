@@ -1,5 +1,7 @@
 package rsvier.service;
 
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -11,11 +13,15 @@ import rsvier.repository.AccountRepository;
 
 import static java.util.Collections.emptyList;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
-public class UserDetailsServiceImpl implements UserDetailsService {
+public class CustomUserDetailsService implements UserDetailsService {
 	private AccountRepository applicationUserRepository;
 
-	public UserDetailsServiceImpl(AccountRepository applicationUserRepository) {
+	public CustomUserDetailsService(AccountRepository applicationUserRepository) {
 		this.applicationUserRepository = applicationUserRepository;
 	}
 	
@@ -25,7 +31,11 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 		if (applicationUser == null) {
 			throw new UsernameNotFoundException(username);
 		}
-		return new User(applicationUser.getUsername(), applicationUser.getPassword(), emptyList());
+		List<GrantedAuthority> roles = new ArrayList<>();
+		roles.add(new SimpleGrantedAuthority(applicationUser.getAccountRole().getRole()));
+		User user = new User(applicationUser.getUsername(), applicationUser.getPassword(), roles);
+		System.out.println("USER: " + user);
+		return user;
 	}
 	
 }

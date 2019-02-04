@@ -3,6 +3,7 @@ package rsvier.controller;
 import java.util.List;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import rsvier.domain.Account;
+import rsvier.domain.AccountRole;
 import rsvier.repository.AccountRepository;
 
 @RestController
@@ -20,28 +22,17 @@ import rsvier.repository.AccountRepository;
 public class AccountController {
 	
 	private AccountRepository accountRepository;
-	private BCryptPasswordEncoder bCryptPasswordEncoder;
+	private PasswordEncoder passwordEncoder;
 	
 	public AccountController(AccountRepository applicationUserRepository,
-			BCryptPasswordEncoder bCryptPasswordEncoder) {
+			PasswordEncoder passwordEncoder) {
 		this.accountRepository = applicationUserRepository;
-		this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+		this.passwordEncoder = passwordEncoder;
 	}
 	
 	@GetMapping("/list")
 	public List<Account> getAccountList() {
 		return accountRepository.findAll();
-	}
-	
-	// TODO: implement correct error handling
-	@PostMapping("/register") 
-	public boolean register(@RequestBody Account account) {
-		if (accountRepository.findByUsername(account.getUsername()) == null) {
-			account.setPassword(bCryptPasswordEncoder.encode(account.getPassword()));
-			accountRepository.save(account);
-			return true;
-		}
-		return false;
 	}
 	
 	@GetMapping("/{id}")
