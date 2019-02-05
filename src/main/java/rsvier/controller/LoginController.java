@@ -48,11 +48,10 @@ public class LoginController {
 		return ResponseEntity.ok(new JWTAuthenticationResponse(jwt));
 	}
 
-	// TODO: Check how to handle generic correctly
 	@PostMapping("/account/register")
 	public ResponseEntity<ApiResponse> register(@Valid @RequestBody Account account) {
 		if (accountRepository.findByUsername(account.getUsername()) != null) {
-			return new ResponseEntity(new ApiResponse(400, "Username does already exist", null), HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<ApiResponse>(new ApiResponse(400, "Username does already exist", null), HttpStatus.BAD_REQUEST);
 		}
 		if (account.getAccountRole() == null) {
 			// TODO: need different way to handle default role
